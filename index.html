@@ -1,176 +1,256 @@
 <!doctype html>
-<html lang="tr">
+<html lang="tr"> 
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>oyunkcan - Mini Oyun Portalı</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>oyunkcan — Mini Oyun Portalı</title>
   <style>
-    body{font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:#0b1020;color:#e6eef8;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0}
-    .wrap{width:960px;max-width:96%;}
-    header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
-    h1{margin:0;font-size:1.4rem}
-    .controls{display:flex;gap:8px}
-    button{background:#2b6cb0;color:white;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}
-    button.secondary{background:#1f2937}
-    .game-area{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .card{background:#071028;border-radius:12px;padding:12px;box-shadow:0 6px 18px rgba(0,0,0,0.5)}
-    canvas{background:#071127;border-radius:8px;display:block;margin:8px auto;border:2px solid #0f1724}
-    .info{font-size:0.9rem;color:#9fb4d6}
-    .center{display:flex;gap:8px;align-items:center}
-    .hidden{display:none}
+    :root{--bg:#0b1020;--card:#0f1724;--accent:#3b82f6;--danger:#ef4444;--muted:#9ca3af;color-scheme:dark}
+    *{box-sizing:border-box;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
+    body{margin:0;background:linear-gradient(180deg,#020617 0%,#071029 100%);color:#e6eef8;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+    .wrap{width:100%;max-width:980px;background:linear-gradient(180deg,rgba(255,255,255,0.02),rgba(255,255,255,0.01));border-radius:12px;padding:18px;border:1px solid rgba(255,255,255,0.04)}
+    header{display:flex;align-items:center;gap:12px}
+    h1{margin:0;font-size:20px}
+    .meta{color:var(--muted);font-size:13px}
+    .menu{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+    button, .btn{background:transparent;border:1px solid rgba(255,255,255,0.06);color:inherit;padding:8px 12px;border-radius:8px;cursor:pointer}
+    button.active{background:var(--accent);color:#041024;border-color:transparent}
+    .content{display:flex;gap:16px;margin-top:18px}
+    .left{width:420px}
+    canvas{background:#000;border-radius:8px;display:block;width:100%;height:auto}
+    .controls{display:flex;gap:8px;margin-top:8px;align-items:center}
+    .score{margin-left:auto;color:var(--muted)}
+    .mobile-controls{display:none;gap:8px;margin-top:10px}
+    .tip{color:var(--muted);font-size:13px;margin-top:10px}
+    .right{flex:1;min-width:240px}
+    .section{background:rgba(255,255,255,0.02);padding:12px;border-radius:8px;margin-bottom:12px}
+    .danger{color:var(--danger)}
+    @media (max-width:900px){.content{flex-direction:column;align-items:center}.left{width:100%}.mobile-controls{display:flex}}
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
-      <h1>oyunkcan — Mini Oyun Portalı</h1>
-      <div class="controls">
-        <button id="homeBtn">Ana Sayfa</button>
-        <button id="reloadBtn" class="secondary">Yeniden Başlat</button>
+      <div>
+        <h1>oyunkcan</h1>
+        <div class="meta">Mini oyun portalı — Aksiyon & Korku</div>
       </div>
     </header>
 
-    <section id="home" class="card">
-      <p class="info">İki oyun var: <strong>Aksiyon</strong> (klavyeyle) ve <strong>Korku</strong> (fare ile). Seçmek için butona tıkla.</p>
-      <div class="center" style="margin-top:12px">
-        <button id="startAction">Aksiyon Oyunu</button>
-        <button id="startHorror">Korku Oyunu</button>
-      </div>
-    </section>
+    <div class="menu">
+      <button id="btn-action" class="active">Aksiyon</button>
+      <button id="btn-horror">Korku</button>
+      <button id="btn-reset">Yeniden Başlat</button>
+      <div class="score">Skor: <span id="score">0</span></div>
+    </div>
 
-    <section id="games" class="game-area" style="margin-top:12px">
-      <div id="actionCard" class="card hidden">
-        <h2>Aksiyon Oyunu</h2>
-        <p class="info">Sol/Sağ ok tuşlarıyla hareket et. Üzerine düşen kırmızı bloklara çarparsan oyun biter.</p>
-        <canvas id="actionCanvas" width="400" height="400"></canvas>
-        <div class="center"><div>Skor: <span id="actionScore">0</span></div></div>
+    <div class="content">
+      <div class="left">
+        <canvas id="gameCanvas" width="400" height="400"></canvas>
+        <div class="mobile-controls">
+          <button id="leftBtn">◀</button>
+          <button id="rightBtn">▶</button>
+          <button id="tapBtn">Tıkla</button>
+        </div>
+        <div class="tip">İpucu: Klavyede ← ve → ile oynayabilirsiniz. Mobilde alt tuşları kullanın.</div>
       </div>
 
-      <div id="horrorCard" class="card hidden">
-        <h2>Korku Oyunu</h2>
-        <p class="info">Ekrar karanlık, fare ile küçük ışığı hareket ettir. Gizemli şey fareye dokunursa jumpscare olur.</p>
-        <canvas id="horrorCanvas" width="400" height="400"></canvas>
-        <div class="center"><div id="horrorMsg">Bekleniyor...</div></div>
+      <div class="right">
+        <div class="section">
+          <strong>Nasıl oynanır — Aksiyon</strong>
+          <p class="tip">Oyuncu (yeşil kare) ile sola-sağa hareket edip düşen kırmızı bloklardan kaç. Çarpınca oyun biter.</p>
+        </div>
+        <div class="section">
+          <strong>Nasıl oynanır — Korku</strong>
+          <p class="tip">Ekrarda karanlık ve sadece fare etrafında ışık vardır. Gizli "korkunç" nokta fareyle çakışırsa jumpscare (alert) olur.</p>
+        </div>
+        <div class="section">
+          <strong>Yayın</strong>
+          <p class="tip">Bu dosyayı <code>index.html</code> olarak kaydet. GitHub Pages ile ücretsiz yayınlayabilirsin (repo adı: <code>oyunkcan</code> önerilir).</p>
+        </div>
       </div>
-    </section>
+    </div>
   </div>
 
-<script>
-// Helper
-const $ = id => document.getElementById(id);
-// UI
-const home = $('home');
-const games = $('games');
-const actionCard = $('actionCard');
-const horrorCard = $('horrorCard');
-const startAction = $('startAction');
-const startHorror = $('startHorror');
-const reloadBtn = $('reloadBtn');
-const homeBtn = $('homeBtn');
+  <script>
+    // Basic game framework supporting two modes: action & horror
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+    const scoreEl = document.getElementById('score');
+    const btnAction = document.getElementById('btn-action');
+    const btnHorror = document.getElementById('btn-horror');
+    const btnReset = document.getElementById('btn-reset');
 
-homeBtn.onclick = () => { showHome(); }
-reloadBtn.onclick = () => { location.reload(); }
+    const leftBtn = document.getElementById('leftBtn');
+    const rightBtn = document.getElementById('rightBtn');
+    const tapBtn = document.getElementById('tapBtn');
 
-function showHome(){ home.classList.remove('hidden'); actionCard.classList.add('hidden'); horrorCard.classList.add('hidden'); }
-function showAction(){ home.classList.add('hidden'); actionCard.classList.remove('hidden'); horrorCard.classList.add('hidden'); }
-function showHorror(){ home.classList.add('hidden'); horrorCard.classList.remove('hidden'); actionCard.classList.add('hidden'); }
+    let mode = 'action';
+    let raf = null;
+    let interval = null;
 
-startAction.onclick = () => { showAction(); startActionGame(); }
-startHorror.onclick = () => { showHorror(); startHorrorGame(); }
+    // Shared state
+    let score = 0;
 
-// ===== Aksiyon Oyunu =====
-let actionInterval, actionScore=0;
-function startActionGame(){
-  clearAction();
-  const canvas = $('actionCanvas');
-  const ctx = canvas.getContext('2d');
-  const W = canvas.width, H = canvas.height;
-  const player = {x: W/2-10, y: H-40, w:20, h:20};
-  let enemies = [];
-  actionScore = 0; $('actionScore').textContent = actionScore;
-  let left=false,right=false;
+    // Action game state
+    const player = { x: 180, y: 360, size: 40, speed: 20 };
+    let enemies = [];
 
-  document.onkeydown = e=>{ if(e.key==='ArrowLeft') left=true; if(e.key==='ArrowRight') right=true }
-  document.onkeyup = e=>{ if(e.key==='ArrowLeft') left=false; if(e.key==='ArrowRight') right=false }
+    // Horror game state
+    let fearX = 200, fearY = 200;
+    let lightRadius = 70;
 
-  function spawn(){ if(Math.random()<0.35) enemies.push({x:Math.random()*(W-20),y:-20,size:20,vy:2+Math.random()*2}); }
-  function loop(){
-    ctx.clearRect(0,0,W,H);
-    // player
-    if(left) player.x = Math.max(0, player.x-6);
-    if(right) player.x = Math.min(W-player.w, player.x+6);
-    ctx.fillStyle = '#22c55e'; ctx.fillRect(player.x,player.y,player.w,player.h);
-    // enemies
-    spawn();
-    ctx.fillStyle = '#ef4444';
-    for(let i=enemies.length-1;i>=0;i--){
-      const e=enemies[i]; e.y += e.vy; ctx.fillRect(e.x,e.y,e.size,e.size);
-      // remove if out
-      if(e.y>H) enemies.splice(i,1);
-      // collision
-      if(e.x < player.x+player.w && e.x+e.size > player.x && e.y < player.y+player.h && e.y+e.size > player.y){
-        clearInterval(actionInterval);
-        alert('Oyun Bitti! Skor: '+actionScore);
-        showHome();
-        return;
+    function setMode(m){
+      mode = m;
+      btnAction.classList.toggle('active', mode==='action');
+      btnHorror.classList.toggle('active', mode==='horror');
+      reset();
+      if(mode==='action') startAction(); else startHorror();
+    }
+
+    function reset(){
+      cancelAnimationFrame(raf);
+      clearInterval(interval);
+      enemies = [];
+      score = 0; scoreEl.textContent = score;
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      canvas.onmousemove = null;
+    }
+
+    // ACTION GAME
+    function startAction(){
+      player.x = 180; player.y = 360; enemies = []; score = 0; scoreEl.textContent = score;
+      // spawn enemies periodically
+      interval = setInterval(()=>{
+        if(Math.random() < 0.45){
+          enemies.push({ x: Math.random()*(canvas.width-20), y: -20, size: 20, speed: 2 + Math.random()*3 });
+        }
+      }, 650);
+      loopAction();
+    }
+
+    function loopAction(){
+      raf = requestAnimationFrame(loopAction);
+      ctx.clearRect(0,0,canvas.width,canvas.height);
+      // draw player
+      ctx.fillStyle = '#16a34a';
+      ctx.fillRect(player.x, player.y, player.size, player.size);
+      // enemies
+      ctx.fillStyle = '#ef4444';
+      for(let i = enemies.length-1; i>=0; i--){
+        const e = enemies[i];
+        e.y += e.speed;
+        ctx.fillRect(e.x, e.y, e.size, e.size);
+        // remove if off screen
+        if(e.y > canvas.height) enemies.splice(i,1);
+        // collision
+        if(collideRect(e.x,e.y,e.size,e.size, player.x,player.y,player.size,player.size)){
+          gameOver('Aksiyon oyununda kaybettin! Skor: ' + score);
+          return;
+        }
       }
+      score += 1;
+      scoreEl.textContent = score;
     }
-    actionScore++;
-    $('actionScore').textContent = actionScore;
-  }
-  actionInterval = setInterval(loop,80);
-}
-function clearAction(){ if(window.actionInterval) clearInterval(window.actionInterval); document.onkeydown=null; document.onkeyup=null; }
 
-// ===== Korku Oyunu =====
-let horrorInterval;
-function startHorrorGame(){
-  clearHorror();
-  const canvas = $('horrorCanvas');
-  const ctx = canvas.getContext('2d');
-  const W = canvas.width, H = canvas.height;
-  let ghost = {x:Math.random()*W,y:Math.random()*H};
-  const msg = $('horrorMsg'); msg.textContent='Oyna: fareyi gezdir';
+    // HORROR GAME
+    function startHorror(){
+      // dark overlay with small light around cursor
+      score = 0; scoreEl.textContent = '-';
+      fearX = Math.random()*canvas.width; fearY = Math.random()*canvas.height;
+      // move fear around every second
+      interval = setInterval(()=>{
+        fearX = Math.random()*canvas.width; fearY = Math.random()*canvas.height;
+      }, 1100);
 
-  function drawDark(x,y){
-    // dark background
-    ctx.fillStyle = 'rgba(0,0,0,0.95)'; ctx.fillRect(0,0,W,H);
-    // spotlight
-    const grad = ctx.createRadialGradient(x,y,10,x,y,120);
-    grad.addColorStop(0,'rgba(255,255,255,0.95)');
-    grad.addColorStop(1,'rgba(0,0,0,0)');
-    ctx.globalCompositeOperation = 'destination-out';
-    ctx.fillStyle = grad; ctx.beginPath(); ctx.arc(x,y,120,0,Math.PI*2); ctx.fill();
-    ctx.globalCompositeOperation = 'source-over';
-    // hint: draw faint circle for subtlety (optional)
-    ctx.strokeStyle='rgba(255,255,255,0.03)'; ctx.beginPath(); ctx.arc(ghost.x,ghost.y,10,0,Math.PI*2); ctx.stroke();
-  }
+      canvas.onmousemove = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        // paint a dim background
+        ctx.clearRect(0,0,canvas.width,canvas.height);
+        ctx.fillStyle = 'rgba(0,0,0,0.92)';
+        ctx.fillRect(0,0,canvas.width,canvas.height);
+        // light circle
+        const gradient = ctx.createRadialGradient(x,y,10,x,y,lightRadius);
+        gradient.addColorStop(0, 'rgba(255,255,255,0.95)');
+        gradient.addColorStop(0.6, 'rgba(255,255,255,0.06)');
+        gradient.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.globalCompositeOperation = 'destination-out';
+        ctx.fillStyle = gradient;
+        ctx.beginPath(); ctx.arc(x,y, lightRadius, 0, Math.PI*2); ctx.fill();
+        ctx.globalCompositeOperation = 'source-over';
 
-  function onMove(e){
-    const rect = canvas.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    drawDark(x,y);
-    // check proximity
-    if(Math.abs(x-ghost.x)<12 && Math.abs(y-ghost.y)<12){
-      clearHorror();
-      // jumpscare (simple): show full white flash and sound if available
-      ctx.fillStyle = '#fff'; ctx.fillRect(0,0,W,H);
-      alert('👻 Bir şey sana dokundu!');
-      showHome();
+        // small indicator for fear (not visible normally)
+        // If user is very close to fear point -> trigger
+        const dx = x - fearX; const dy = y - fearY;
+        if(Math.abs(dx) < 12 && Math.abs(dy) < 12){
+          // jumpscare
+          clearInterval(interval);
+          canvas.onmousemove = null;
+          alert('👻 Bir şey sana dokundu!');
+          setMode('action');
+        }
+      };
+      // initial dark canvas
+      ctx.fillStyle='rgba(0,0,0,0.96)'; ctx.fillRect(0,0,canvas.width,canvas.height);
     }
-  }
 
-  canvas.onmousemove = onMove;
-  // move ghost randomly
-  horrorInterval = setInterval(()=>{ ghost.x = Math.random()*W; ghost.y = Math.random()*H; },1000);
-}
-function clearHorror(){ if(window.horrorInterval) clearInterval(window.horrorInterval); const c=$('horrorCanvas'); if(c) c.onmousemove=null; }
+    function collideRect(x1,y1,w1,h1,x2,y2,w2,h2){
+      return !(x1+w1 < x2 || x1 > x2+w2 || y1+h1 < y2 || y1 > y2+h2);
+    }
 
-// Start page default
-showHome();
+    function gameOver(msg){
+      cancelAnimationFrame(raf);
+      clearInterval(interval);
+      canvas.onmousemove = null;
+      setTimeout(()=>{alert(msg);},10);
+      setMode('action');
+    }
 
-// If user loaded directly into a game, optional auto-start
-</script>
+    // Input
+    document.addEventListener('keydown',(e)=>{
+      if(mode!=='action') return;
+      if(e.key === 'ArrowLeft') player.x = Math.max(0, player.x - player.speed);
+      if(e.key === 'ArrowRight') player.x = Math.min(canvas.width - player.size, player.x + player.speed);
+    });
+
+    leftBtn?.addEventListener('touchstart',()=>{ if(mode==='action') player.x = Math.max(0, player.x - player.speed); });
+    rightBtn?.addEventListener('touchstart',()=>{ if(mode==='action') player.x = Math.min(canvas.width - player.size, player.x + player.speed); });
+    leftBtn?.addEventListener('click',()=>{ if(mode==='action') player.x = Math.max(0, player.x - player.speed); });
+    rightBtn?.addEventListener('click',()=>{ if(mode==='action') player.x = Math.min(canvas.width - player.size, player.x + player.speed); });
+
+    tapBtn?.addEventListener('click',()=>{ if(mode==='action'){
+      // give a small dash
+      player.x = Math.min(canvas.width-player.size, player.x + 30);
+    } else if(mode==='horror'){
+      // in horror mode, simulate mouse move to center
+      const evt = new MouseEvent('mousemove',{clientX: canvas.getBoundingClientRect().left + canvas.width/2, clientY: canvas.getBoundingClientRect().top + canvas.height/2});
+      canvas.dispatchEvent(evt);
+    }});
+
+    // Buttons
+    btnAction.addEventListener('click',()=>setMode('action'));
+    btnHorror.addEventListener('click',()=>setMode('horror'));
+    btnReset.addEventListener('click',()=>{ reset(); setMode('action'); });
+
+    // simple touch drag for horror light on mobile
+    canvas.addEventListener('touchmove', (ev)=>{
+      if(mode!=='horror') return;
+      const t = ev.touches[0];
+      const rect = canvas.getBoundingClientRect();
+      const x = t.clientX - rect.left; const y = t.clientY - rect.top;
+      // dispatch a synthetic mousemove
+      const m = new MouseEvent('mousemove', {clientX: t.clientX, clientY: t.clientY});
+      canvas.dispatchEvent(m);
+      ev.preventDefault();
+    }, {passive:false});
+
+    // init
+    setMode('action');
+
+    // Auto save name (display) — site name is oyunkcan
+    console.log('Site: oyunkcan');
+  </script>
 </body>
 </html>
